@@ -54,10 +54,12 @@
   section{padding:clamp(72px,11vw,128px) 0}
   .em{color:var(--emerald-d);font-weight:700}
 
-  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
-  .reveal.in{opacity:1;transform:none}
+  /* コンテンツは常に表示が既定。JSが動いてhtmlに.animが付いたときだけアニメーション用の非表示状態になる */
+  .reveal{transition:opacity .7s ease,transform .7s ease}
+  html.anim .reveal{opacity:0;transform:translateY(22px)}
+  html.anim .reveal.in{opacity:1;transform:none}
   @media (prefers-reduced-motion:reduce){
-    .reveal{opacity:1;transform:none;transition:none}
+    html.anim .reveal{opacity:1;transform:none;transition:none}
     html{scroll-behavior:auto}
   }
   a:focus-visible,button:focus-visible{outline:3px solid #7EE0B6;outline-offset:3px}
@@ -643,21 +645,25 @@
 </div>
 
 <script>
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach((e)=>{
-      if(e.isIntersecting){
-        e.target.classList.add('in');
-        io.unobserve(e.target);
-      }
-    });
-  },{threshold:0.12, rootMargin:"0px 0px -8% 0px"});
-  document.querySelectorAll('.reveal').forEach((el,i)=>{
-    el.style.transitionDelay = (Math.min(i,6)*0.04)+'s';
-    io.observe(el);
-  });
-
+  try{
+    if('IntersectionObserver' in window){
+      document.documentElement.classList.add('anim');
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach((e)=>{
+          if(e.isIntersecting){
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        });
+      },{threshold:0.12, rootMargin:"0px 0px -8% 0px"});
+      document.querySelectorAll('.reveal').forEach((el,i)=>{
+        el.style.transitionDelay = (Math.min(i,6)*0.04)+'s';
+        io.observe(el);
+      });
     }
-  });
+  }catch(err){
+    document.documentElement.classList.remove('anim');
+  }
 </script>
 </body>
 </html>
